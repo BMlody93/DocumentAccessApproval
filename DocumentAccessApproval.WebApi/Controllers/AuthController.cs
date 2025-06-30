@@ -25,7 +25,7 @@ namespace DocumentAccessApproval.WebApi.Controllers
         public IActionResult Login([FromBody] UserLoginDto userDto)
         {
             var user = _userManager.GetUser(userDto.Username);
-            if (userDto.Password == "password")
+            if (userDto.Password == user.Password)
             {
                 var token = GenerateJwtToken(userDto.Username);
                 return Ok(new { token });

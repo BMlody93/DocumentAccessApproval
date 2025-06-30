@@ -40,10 +40,10 @@ namespace DocumentAccessApproval.DataLayer
 
 
             modelBuilder.Entity<User>().HasData(
-                new User { Id = Guid.NewGuid(), Username = "commonUser", UserType = UserType.Common });
+                new User { Id = Guid.NewGuid(), Username = "commonUser", Password="password", UserType = UserType.Common });
 
             modelBuilder.Entity<User>().HasData(
-                new User { Id = Guid.NewGuid(), Username = "approverUser", UserType = UserType.Approver });
+                new User { Id = Guid.NewGuid(), Username = "approverUser", Password="password", UserType = UserType.Approver });
 
             modelBuilder.Entity<Document>().HasData(
                 new Document { Id = Guid.NewGuid(), Name = "TestFile.pdf", Content = System.IO.File.ReadAllBytes("ExampleDocument/sample-1.pdf") });
