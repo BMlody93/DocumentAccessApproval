@@ -1,0 +1,6 @@
+@DocumentAccessApproval.WebApi_HostAddress = http://localhost:5187
+
+GET {{DocumentAccessApproval.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
