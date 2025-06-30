@@ -1,7 +1,5 @@
-﻿using DocumentAccessApproval.BusinessLogic.Managers;
-using DocumentAccessApproval.Domain.Interfaces;
+﻿using DocumentAccessApproval.Domain.Interfaces;
 using DocumentAccessApproval.WebApi.DTOs;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,23 +12,42 @@ namespace DocumentAccessApproval.WebApi.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        IUserManager _userManager;
+        private readonly IUserManager _userManager;
 
-        public AuthController()
+        public AuthController(IUserManager userManager)
         {
-            _userManager = new UserManager();
+            _userManager = userManager;
         }
 
+        /// <summary>
+        /// Login method returning JWT 
+        /// </summary>
+        /// <param name="userDto">object  with data for login which include:
+        /// - username
+        /// - password</param>
+        /// <returns></returns>
         [HttpPost("login")]
-        public IActionResult Login([FromBody] UserLoginDto userDto)
+        public async Task<IActionResult> Login([FromBody] UserLoginDto userDto)
         {
-            var user = _userManager.GetUser(userDto.Username);
-            if (userDto.Password == user.Password)
+            if (userDto == null || string.IsNullOrEmpty(userDto.Username) || string.IsNullOrEmpty(userDto.Password))
             {
-                var token = GenerateJwtToken(userDto.Username);
-                return Ok(new { token });
+                return BadRequest("Username and password must be provided.");
             }
-            return Unauthorized();
+
+            var user = await _userManager.GetUserAsync(userDto.Username);
+            if (user == null)
+            {
+                return Unauthorized("Invalid username or password.");
+            }
+
+            // TODO: In real app, you should hash and verify the password securely
+            if (userDto.Password != user.Password)
+            {
+                return Unauthorized("Invalid username or password.");
+            }
+
+            var token = GenerateJwtToken(userDto.Username);
+            return Ok(new { token });
         }
 
         private string GenerateJwtToken(string username)

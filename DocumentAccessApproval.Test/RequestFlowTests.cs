@@ -30,18 +30,17 @@ namespace DocumentAccessApproval.Test
 
             context.Database.EnsureCreated();
 
-            _accessrequestManager = new AccessRequestManager();
-            _userManager = new UserManager();
-            _documentManager = new DocumentManager();
+            _accessrequestManager = new AccessRequestManager(context);
+            _userManager = new UserManager(context);
+            _documentManager = new DocumentManager(context);
         }
 
         [Test]
-        public void ReadDocument_Correct()
+        public async Task ReadDocument_Correct()
         {
-
-            var commonUser = _userManager.GetUser("commonUser");
-            var approverUser = _userManager.GetUser("approverUser");
-            var document = _documentManager.GetDocuments().FirstOrDefault();
+            var commonUser = await _userManager.GetUserAsync("commonUser");
+            var approverUser = await _userManager.GetUserAsync("approverUser");
+            var document = (await _documentManager.GetDocumentsAsync()).FirstOrDefault();
 
             var accessRequest = new AccessRequest()
             {
@@ -55,18 +54,19 @@ namespace DocumentAccessApproval.Test
                 AccessReason = "Access for test purposes"
             };
 
-            var requestId = _accessrequestManager.CreateAccessRequest(accessRequest);
+            var requestId = await _accessrequestManager.CreateAccessRequestAsync(accessRequest);
 
-            accessRequest = _accessrequestManager.GetAccessRequest(requestId);
+            accessRequest = await _accessrequestManager.GetAccessRequestAsync(requestId);
 
             var decision = new Decision()
             {
-                Status = Status.Approved
+                Status = Status.Approved,
+                Reason = "Test of getting document"
             };
 
-            _accessrequestManager.UpdateAccessRequestDecision(requestId, approverUser.Username, decision);
+            await _accessrequestManager.UpdateAccessRequestDecisionAsync(requestId, approverUser.Username, decision);
 
-            var resultDocument = _documentManager.GetDocument(document.Id, commonUser.Username);
+            var resultDocument = await _documentManager.GetDocumentAsync(document.Id, commonUser.Username);
 
             Assert.That(resultDocument, Is.Not.Null);
 

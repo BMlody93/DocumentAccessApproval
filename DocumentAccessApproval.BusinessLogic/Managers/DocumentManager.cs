@@ -1,6 +1,7 @@
 ﻿using DocumentAccessApproval.DataLayer;
 using DocumentAccessApproval.Domain.Interfaces;
 using DocumentAccessApproval.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,51 +12,72 @@ namespace DocumentAccessApproval.BusinessLogic.Managers
 {
     public class DocumentManager : IDocumentManager
     {
-        public void EditDocument(string username, Document document)
+        private readonly DatabaseContext _dbContext;
+
+        public DocumentManager(DatabaseContext dbContext)
         {
-            using (var dbContext = new DatabaseContext())
+            _dbContext = dbContext;
+        }
+
+        public async Task EditDocumentAsync(string username, Document document)
+        {
+            try
             {
-                var accessRequest = dbContext.AccessRequests.FirstOrDefault(ar =>
-                    ar.User.Username == username &&
-                    ar.AccessType == AccessType.Read &&
-                    ar.Decision.Status == Status.Approved &&
-                    ar.Document.Id == document.Id);
+                ArgumentException.ThrowIfNullOrEmpty(username);
+                ArgumentNullException.ThrowIfNull(document);
+                var accessRequest = await _dbContext.AccessRequests.SingleOrDefaultAsync(ar =>
+                        ar.User.Username == username &&
+                        ar.AccessType == AccessType.Read &&
+                        ar.Decision.Status == Status.Approved &&
+                        ar.Document.Id == document.Id);
 
                 if (accessRequest == null)
                     throw new Exception("User does not have aproved request for editing this document");
-                
+
                 accessRequest.Document.Content = document.Content;
                 accessRequest.Document.Name = document.Name;
 
-                dbContext.AccessRequests.Update(accessRequest);
-                dbContext.SaveChanges();
+                _dbContext.AccessRequests.Update(accessRequest);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 
-        public Document GetDocument(Guid documentId, string username)
+        public async Task<Document> GetDocumentAsync(Guid documentId, string username)
         {
-            using (var dbContext = new DatabaseContext())
+            try
             {
-                var accessRequest = dbContext.AccessRequests.FirstOrDefault(ar=>
-                    ar.User.Username == username && 
-                    ar.AccessType == AccessType.Read && 
-                    ar.Decision.Status == Status.Approved &&
-                    ar.Document.Id == documentId);
+                ArgumentException.ThrowIfNullOrEmpty(username);
+                var accessRequest = await _dbContext.AccessRequests.SingleOrDefaultAsync(ar =>
+                        ar.User.Username == username &&
+                        ar.AccessType == AccessType.Read &&
+                        ar.Decision.Status == Status.Approved &&
+                        ar.Document.Id == documentId);
 
                 if (accessRequest == null)
                     throw new Exception("User does not have aproved request for reading this document");
 
                 return accessRequest.Document;
             }
-
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
-        public IEnumerable<Document> GetDocuments()
+        public async Task<IEnumerable<Document>> GetDocumentsAsync()
         {
-            using (var dbContext = new DatabaseContext())
+            try
             {
-                var documents = dbContext.Documents.ToList();
+                var documents = await _dbContext.Documents.ToListAsync();
                 return documents;
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }

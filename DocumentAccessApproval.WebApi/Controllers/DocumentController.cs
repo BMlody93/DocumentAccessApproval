@@ -1,5 +1,4 @@
-﻿using DocumentAccessApproval.BusinessLogic.Managers;
-using DocumentAccessApproval.Domain.Interfaces;
+﻿using DocumentAccessApproval.Domain.Interfaces;
 using DocumentAccessApproval.Domain.Models;
 using DocumentAccessApproval.WebApi.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -11,59 +10,79 @@ namespace DocumentAccessApproval.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DocumentController : ControllerBase
     {
-        public IDocumentManager _documentManager { get; set; }
-        public DocumentController() {
-            _documentManager = new DocumentManager();
+        private readonly IDocumentManager _documentManager;
+        public DocumentController(IDocumentManager documentManager)
+        {
+            _documentManager = documentManager;
         }
 
+        /// <summary>
+        /// Get all documents (without content)
+        /// </summary>
+        /// <returns></returns>
         // GET: api/<DocumentController>
         [HttpGet]
-        [Authorize]
-        public IEnumerable<DocumentDto> Get()
+        public async Task<ActionResult<IEnumerable<DocumentDto>>> Get()
         {
-            var documentsDto = _documentManager.GetDocuments()
+            var documentsDto = (await _documentManager.GetDocumentsAsync())
                 .Select(d => new DocumentDto() 
-                { 
-                    DocumetId = d.Id, 
+                {
+                    DocumentId = d.Id, 
                     Name = d.Name 
                 });
 
-            return documentsDto;
+            return Ok(documentsDto);
         }
 
+        /// <summary>
+        /// Get document with specific id
+        /// </summary>
+        /// <param name="id">Id of document</param>
+        /// <returns></returns>
         // GET api/<DocumentController>/5
         [HttpGet("{id}")]
-        [Authorize]
-        public DocumentDto Get(Guid documentId)
+        public async Task<ActionResult<DocumentDto>> Get(Guid id)
         {
             var username = User.Identity.Name;
-            var document = _documentManager.GetDocument(documentId, username);
+            var document = await _documentManager.GetDocumentAsync(id, username);
+
+            if (document == null)
+                return NotFound();
 
             var documentDto = new DocumentDto()
             {
-                DocumetId = document.Id,
+                DocumentId = document.Id,
                 Name = document.Name,
                 Content = document.Content
             };
 
-            return documentDto;
+            return Ok(documentDto);
         }
 
+        /// <summary>
+        /// Edit document with specific id
+        /// </summary>
+        /// <param name="id">id of document</param>
+        /// <param name="documentDto">object containing all parameters needed to edit document which include:
+        /// - name of document
+        /// - content of document</param>
         // PUT api/<DocumentController>/5
         [HttpPut("{id}")]
-        [Authorize]
-        public void Put(Guid accessRequestId, [FromBody] EditDocumentDto documentDto)
+        public async Task<IActionResult> Put(Guid id, [FromBody] EditDocumentDto documentDto)
         {
             var username = User.Identity.Name;
             var document = new Document()
             {
+                Id = id,
                 Name = documentDto.Name,
                 Content = documentDto.Content
             };
 
-            _documentManager.EditDocument(username, document);
+            await _documentManager.EditDocumentAsync(username, document);
+            return NoContent();
         }
     }
 }

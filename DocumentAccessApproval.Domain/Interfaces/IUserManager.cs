@@ -9,8 +9,8 @@ namespace DocumentAccessApproval.Domain.Interfaces
 {
     public interface IUserManager
     {
-        User GetUser(string username);
-        User GetUser(Guid id);
-        IEnumerable<User> GetUsers();
+        Task<User> GetUserAsync(string username);
+        Task<User> GetUserAsync(Guid id);
+        Task<IEnumerable<User>> GetUsersAsync();
     }
 }

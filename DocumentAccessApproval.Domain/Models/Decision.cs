@@ -12,6 +12,7 @@ namespace DocumentAccessApproval.Domain.Models
         [Key]
         public Guid Id { get; set; }
         public Status Status { get; set; }
+        public string? Reason { get; set; }
 
         public Guid MadeByUserId { get; set; }
         public virtual User MadeByUser { get; set; }

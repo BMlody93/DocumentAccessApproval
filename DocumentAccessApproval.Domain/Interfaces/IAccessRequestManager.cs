@@ -9,9 +9,9 @@ namespace DocumentAccessApproval.Domain.Interfaces
 {
     public interface IAccessRequestManager
     {
-        AccessRequest GetAccessRequest(Guid Id);
-        IEnumerable<AccessRequest> GetAccessRequests();
-        Guid CreateAccessRequest(AccessRequest accessRequest);
-        void UpdateAccessRequestDecision(Guid id, string username, Decision decision);
+        Task<Guid> CreateAccessRequestAsync(AccessRequest accessRequest);
+        Task<AccessRequest> GetAccessRequestAsync(Guid id);
+        Task<IEnumerable<AccessRequest>> GetAccessRequestsAsync();
+        Task UpdateAccessRequestDecisionAsync(Guid id, string username, Decision decision);
     }
 }

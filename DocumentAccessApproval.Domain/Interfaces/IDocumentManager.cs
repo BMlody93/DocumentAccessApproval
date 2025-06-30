@@ -9,8 +9,8 @@ namespace DocumentAccessApproval.Domain.Interfaces
 {
     public interface IDocumentManager
     {
-        Document GetDocument(Guid docuemntId, string username);
-        IEnumerable<Document> GetDocuments();
-        void EditDocument(string username, Document document);
+        Task EditDocumentAsync(string username, Document document);
+        Task<Document> GetDocumentAsync(Guid documentId, string username);
+        Task<IEnumerable<Document>> GetDocumentsAsync();
     }
 }

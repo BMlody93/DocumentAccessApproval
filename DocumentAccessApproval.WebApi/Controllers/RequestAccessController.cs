@@ -1,5 +1,4 @@
-﻿using DocumentAccessApproval.BusinessLogic.Managers;
-using DocumentAccessApproval.Domain.Interfaces;
+﻿using DocumentAccessApproval.Domain.Interfaces;
 using DocumentAccessApproval.Domain.Models;
 using DocumentAccessApproval.WebApi.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -11,38 +10,52 @@ namespace DocumentAccessApproval.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RequestAccessController : ControllerBase
     {
-        public IAccessRequestManager _accessRequestManager { get; set; }
-        public RequestAccessController()
+        private readonly IAccessRequestManager _accessRequestManager;
+        public RequestAccessController(IAccessRequestManager accessRequestManager)
         {
-            _accessRequestManager = new AccessRequestManager();
+            _accessRequestManager = accessRequestManager;
         }
 
+        /// <summary>
+        /// Get all AccessRequests
+        /// </summary>
+        /// <returns></returns>
         // GET: api/<RequestAccessController>
         [HttpGet]
-        [Authorize]
-        public IEnumerable<AccessRequestDto> Get()
+        public async Task<ActionResult<IEnumerable<AccessRequestDto>>> Get()
         {
-            var accessRequestsDto = _accessRequestManager.GetAccessRequests()
-                .Select(ar => new AccessRequestDto() {
+            var accessRequests = await _accessRequestManager.GetAccessRequestsAsync();
+            var accessRequestsDto = accessRequests.Select(ar => new AccessRequestDto()
+            {
                 Id = ar.Id,
-                Username = ar.User.Username,
-                DocumentName = ar.Document.Name,
+                Username = ar.User?.Username,
+                DocumentName = ar.Document?.Name,
                 AccessReason = ar.AccessReason,
                 AccessType = (int)ar.AccessType,
                 DecisionStatus = (int)ar.Decision.Status
             });
 
-            return accessRequestsDto;
+            return Ok(accessRequestsDto);
         }
 
+
+        /// <summary>
+        /// Get access request with specified id
+        /// </summary>
+        /// <param name="id">id of access request</param>
+        /// <returns></returns>
         // GET api/<RequestAccessController>/5
         [HttpGet("{id}")]
-        [Authorize]
-        public AccessRequestDto Get(Guid id)
+        public async Task<ActionResult<AccessRequestDto>> Get(Guid id)
         {
-            var accessRequest = _accessRequestManager.GetAccessRequest(id);
+            var accessRequest = await _accessRequestManager.GetAccessRequestAsync(id);
+
+            if (accessRequest == null)
+                return NotFound();
+
             var accessRequestDto = new AccessRequestDto()
             {
                 Id = accessRequest.Id,
@@ -53,41 +66,61 @@ namespace DocumentAccessApproval.WebApi.Controllers
                 DecisionStatus = (int)accessRequest.Decision.Status
             };
 
-            return accessRequestDto;
+            return Ok(accessRequestDto);
         }
 
+        /// <summary>
+        /// Create access request
+        /// </summary>
+        /// <param name="accessRequestDto">Object containing all needed parameters for creating accessRequest which include:
+        /// - document id of document you want to access
+        /// - access type to specify if you want to read or edit document
+        /// - reason for access
+        /// </param>
         // POST api/<RequestAccessController>
         [HttpPost]
-        [Authorize]
-        public void Post([FromBody] CreateAccessRequestDto accessRequestDto)
+        public async Task<IActionResult> Post([FromBody] CreateAccessRequestDto accessRequestDto)
         {
+            if (accessRequestDto == null)
+                return BadRequest("Invalid request data.");
+
             var accessRequest = new AccessRequest()
             {
                 Id = Guid.NewGuid(),
-                User = new User()
-                {
-                    Username = User.Identity.Name
-                },
+                User = new User() { Username = User.Identity?.Name ?? string.Empty },
                 DocumentId = accessRequestDto.DocumentId,
                 AccessType = (AccessType)accessRequestDto.AccessType,
                 AccessReason = accessRequestDto.AccessReason,
             };
 
-            _accessRequestManager.CreateAccessRequest(accessRequest);
+            await _accessRequestManager.CreateAccessRequestAsync(accessRequest);
+            return CreatedAtAction(nameof(Get), new { id = accessRequest.Id }, null);
         }
 
+        /// <summary>
+        /// Change decision of accessRequest
+        /// </summary>
+        /// <param name="id"> id of accessRequest</param>
+        /// <param name="decisionDto">object containing all parameters of changed decision which include:
+        /// - decision status
+        /// - reason for decision (required if rejecting request)</param>
         // PATCH api/<RequestAccessController>/5
         [HttpPatch("{id}")]
-        [Authorize]
-        public void Put(Guid id, [FromBody] UpdateAccessRequestDecisionDto decisionDto)
+        public async Task<IActionResult> Put(Guid id, [FromBody] UpdateAccessRequestDecisionDto decisionDto)
         {
-            var username = User.Identity.Name;
+            if (decisionDto == null)
+                return BadRequest("Invalid request data.");
+
+            var username = User.Identity?.Name ?? string.Empty;
+
             var decision = new Decision()
             {
-                Status = (Status)decisionDto.DecisionStatus
+                Status = (Status)decisionDto.DecisionStatus,
+                Reason = decisionDto.Reason
             };
 
-            _accessRequestManager.UpdateAccessRequestDecision(id, username, decision);
+            await _accessRequestManager.UpdateAccessRequestDecisionAsync(id, username, decision);
+            return NoContent();
         }
     }
 }

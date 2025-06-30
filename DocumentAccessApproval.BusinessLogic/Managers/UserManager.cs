@@ -1,6 +1,7 @@
 ﻿using DocumentAccessApproval.DataLayer;
 using DocumentAccessApproval.Domain.Interfaces;
 using DocumentAccessApproval.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,30 +12,57 @@ namespace DocumentAccessApproval.BusinessLogic.Managers
 {
     public class UserManager : IUserManager
     {
-        public User GetUser(string username)
+        private readonly DatabaseContext _dbContext;
+        public UserManager(DatabaseContext dbContext)
         {
-            using (var dbContext = new DatabaseContext())
+            _dbContext = dbContext;
+        }
+
+        public async Task<User> GetUserAsync(string username)
+        {
+            try
             {
-                var user = dbContext.Users.FirstOrDefault(ar => ar.Username == username);
+                ArgumentNullException.ThrowIfNull(username);
+                var user = await _dbContext.Users.SingleOrDefaultAsync(ar => ar.Username == username);
+
+                if (user == null)
+                    throw new Exception("User does not exist");
+
                 return user;
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 
-        public User GetUser(Guid id)
+        public async Task<User> GetUserAsync(Guid id)
         {
-            using (var dbContext = new DatabaseContext())
+            try
             {
-                var user = dbContext.Users.FirstOrDefault(ar => ar.Id == id);
+                var user = await _dbContext.Users.FindAsync(id);
+
+                if (user == null)
+                    throw new Exception("User does not exist");
+
                 return user;
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 
-        public IEnumerable<User> GetUsers()
+        public async Task<IEnumerable<User>> GetUsersAsync()
         {
-            using (var dbContext = new DatabaseContext())
+            try
             {
-                var users = dbContext.Users.ToList();
+                var users = await _dbContext.Users.ToListAsync();
                 return users;
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }
