@@ -1,0 +1,24 @@
+# Ignore build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS-specific files
+*.DS_Store
+*.vscode
+*.log
+*.swp
+*.tmp
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
