@@ -38,34 +38,37 @@ Design follows layered architecture principles, clean code practices, and interf
 - Visual Studio 2022
 - .NET 8.0 SDK
 
-### Installation and Running
+### Installation and Running with Docker
 
 1. Clone the GitHub repository:
 
-   git clone https://github.com/BMlody93/DocumentAccessApproval.git  
+   ```bash
+   git clone https://github.com/BMlody93/DocumentAccessApproval.git
    cd DocumentAccessApproval
 
-2. Open the DocumentAccessApproval.sln file in Visual Studio 2022.
+Build and start the Docker containers with Docker Compose:
 
-3. Set DocumentAccessApproval.WebApi as the startup project.
+  docker-compose up --build
 
-4. Run the project using F5 or the "Run" button in Visual Studio.
+This command builds the Docker image(s) from the source code and starts the container(s).
 
-The API will be available at https://localhost:{port} depending on your launch settings.
+Once started, your API will be available at:
 
-On application start, the in-memory database is seeded with:
+http://localhost:<PORT>
 
-- Example users
-- Example documents
+Replace <PORT> with the port specified in your docker-compose.yml file (commonly 5000 or 8080).
 
-### Running Tests
+Stopping the Application
 
-From Visual Studio:
-- Open Test Explorer and run all tests in the DocumentAccessApproval.Test project.
+To stop the containers, press Ctrl+C in the terminal running docker-compose, or run:
 
-From the command line:
+  docker-compose down
 
-   dotnet test
+Running Tests
+
+Tests are part of the solution but not currently included in the Docker image. To run tests locally, use Visual Studio or the .NET CLI:
+
+dotnet test
 
 ## Planned Improvements (Given More Time)
 
